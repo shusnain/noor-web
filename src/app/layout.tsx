@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Geist_Mono } from "next/font/google";
+import { Outfit, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -9,6 +9,11 @@ const outfit = Outfit({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
 });
 
@@ -25,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${outfit.variable} ${geistMono.variable} antialiased root`}
+        className={`${outfit.variable} ${geistMono.variable} ${newsreader.variable} antialiased root`}
       >
         {children}
       </body>
