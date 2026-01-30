@@ -46,7 +46,7 @@ export function Practices() {
               <h3 className="font-medium text-heading font-(family-name:--font-newsreader)">
                 {practice.name}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              <p className="mt-2 text-lg leading-relaxed text-stone-600">
                 {practice.description}
               </p>
             </div>

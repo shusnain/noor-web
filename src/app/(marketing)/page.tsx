@@ -9,15 +9,15 @@ export default function LandingPage() {
     <div className="min-h-screen bg-bg font-(family-name:--font-outfit)">
       {/* Nav */}
       <div className="sticky top-0 z-50 border-b border-black bg-bg">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <nav className="flex items-center justify-between px-6 py-4">
           <span className="border-r border-black pr-6 text-xl font-semibold text-heading">
             Ojala
           </span>
           <Link
             href="/home"
-            className="rounded-lg border border-heading px-4 py-2 text-sm font-medium tracking-wide text-heading transition-colors hover:bg-heading hover:text-stone-50"
+            className="rounded-lg bg-heading px-4 py-2 text-sm font-medium tracking-wide text-stone-50 transition-colors hover:bg-heading/85"
           >
-            Talk to Founders
+            Get Started
           </Link>
         </nav>
       </div>
@@ -26,14 +26,14 @@ export default function LandingPage() {
       <section className="border-b border-stone-200">
         <div className="grid lg:grid-cols-2">
           {/* Left: copy */}
-          <div className="flex flex-col justify-center px-6 py-14 lg:py-20 lg:pl-[max(1.5rem,calc((100vw-72rem)/2))] lg:pr-16">
-            <p className="text-xs font-medium uppercase tracking-widest text-stone-400">
-              AI-powered invoice auditing
+          <div className="flex flex-col justify-center px-6 py-14 lg:py-28 lg:pl-10 lg:pr-16">
+            <p className="text-sm font-medium uppercase tracking-widest text-stone-400 font-mono">
+              <span className="mr-2">&#9670;</span>AI-powered invoice auditing
             </p>
             <h1 className="mt-3 text-3xl font-medium leading-tight tracking-tight text-heading font-(family-name:--font-newsreader) sm:text-4xl lg:text-5xl">
               Your vendors are charging you more than your contract
             </h1>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-stone-600">
+            <p className="mt-4 max-w-md text-lg leading-relaxed text-stone-600">
               Ojala helps healthcare providers stop overpaying vendors
               by automatically auditing every supply invoice against your
               contracted rates.
@@ -43,7 +43,7 @@ export default function LandingPage() {
                 href="/home"
                 className="inline-flex items-center gap-2 rounded-lg border border-heading px-6 py-3 text-sm font-medium text-heading transition-colors hover:bg-heading hover:text-stone-50"
               >
-                Talk to Founders
+                Get Started
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -90,7 +90,7 @@ export default function LandingPage() {
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-heading font-(family-name:--font-newsreader)">
             Hours per dispute. Most errors just slip through.
           </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-stone-600">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-stone-600">
             Notice the total seems high. Pull the PO. Cross-reference line
             items. Dig up the contract. Write the email. Wait. Follow up. Get
             the credit memo. Reconcile. This takes hours. And that&apos;s when
@@ -111,7 +111,7 @@ export default function LandingPage() {
           <h2 className="mt-6 text-3xl font-medium tracking-tight text-heading font-(family-name:--font-newsreader)">
             Built to earn trust
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-stone-600">
+          <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-stone-600">
             Start in review mode. Approve every action. As confidence grows,
             open up autonomy per vendor, per dollar threshold. Full audit trail
             on everything.
@@ -125,7 +125,7 @@ export default function LandingPage() {
           <h2 className="text-3xl font-medium tracking-tight text-heading font-(family-name:--font-newsreader)">
             Stop leaving money on the table
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-stone-600">
+          <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-stone-600">
             Every invoice error that slips through is money lost. Ojala closes
             the loop, from detection to recovery.
           </p>
@@ -133,7 +133,7 @@ export default function LandingPage() {
             href="/home"
             className="mt-8 inline-flex items-center gap-2 rounded-lg bg-heading px-6 py-3 text-sm font-medium text-stone-50 transition-colors hover:bg-heading/85"
           >
-            Talk to Founders
+            Get Started
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
