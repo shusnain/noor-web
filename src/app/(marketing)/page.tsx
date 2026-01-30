@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Practices } from "@/components/landing/Practices";
+import { BOOKING_URL } from "@/lib/constants";
 
 
 export default function LandingPage() {
@@ -14,7 +15,7 @@ export default function LandingPage() {
             Ojala
           </span>
           <Link
-            href="/home"
+            href={BOOKING_URL}
             className="rounded-none bg-heading px-4 py-2 text-sm font-medium tracking-wide text-stone-50 transition-colors hover:bg-heading/85"
           >
             Get Started
@@ -40,7 +41,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8">
               <Link
-                href="/home"
+                href={BOOKING_URL}
                 className="inline-flex items-center gap-2 rounded-none border border-heading px-8 py-4 text-base font-medium text-heading transition-colors hover:bg-heading hover:text-stone-50"
               >
                 Get Started
@@ -130,7 +131,7 @@ export default function LandingPage() {
             the loop, from detection to recovery.
           </p>
           <Link
-            href="/home"
+            href={BOOKING_URL}
             className="mt-8 inline-flex items-center gap-2 rounded-none bg-heading px-6 py-3 text-sm font-medium text-stone-50 transition-colors hover:bg-heading/85"
           >
             Get Started
