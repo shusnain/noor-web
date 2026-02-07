@@ -1,141 +1,128 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { ArrowUp } from "lucide-react";
-import { Streamdown } from "streamdown";
-import { code } from "@streamdown/code";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-}
+import type { Attachment } from "@/lib/types/chat";
+import {
+  getFileType,
+  validateFile,
+  validateAttachmentCount,
+  createImageAttachment,
+  createPDFAttachment,
+} from "@/lib/files";
+import { getPDFPreview } from "@/lib/pdf";
+import { useChat } from "@/hooks/useChat";
+import {
+  AttachmentPreviewModal,
+  ChatInput,
+  ChatMessage,
+} from "./chat";
 
 export function ChatAssistant() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messages, isStreaming, sendMessage } = useChat();
   const [input, setInput] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
-    }
-  }, [input]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Clear error after 5 seconds
+  useEffect(() => {
+    if (uploadError) {
+      const timer = setTimeout(() => setUploadError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [uploadError]);
+
+  const handleFiles = useCallback(async (files: File[]) => {
+    const countValidation = validateAttachmentCount(attachments.length, files.length);
+    if (!countValidation.valid) {
+      setUploadError(countValidation.error!);
+      return;
+    }
+
+    const newAttachments: Attachment[] = [];
+
+    for (const file of files) {
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        setUploadError(validation.error!);
+        continue;
+      }
+
+      const fileType = getFileType(file);
+
+      try {
+        if (fileType === "image") {
+          const attachment = await createImageAttachment(file);
+          newAttachments.push(attachment);
+        } else if (fileType === "pdf") {
+          const preview = await getPDFPreview(file);
+          const attachment = await createPDFAttachment(file, preview);
+          newAttachments.push(attachment);
+        }
+      } catch (error) {
+        console.error("Failed to process file:", error);
+        setUploadError(`Failed to process ${file.name}`);
+      }
+    }
+
+    setAttachments((prev) => [...prev, ...newAttachments]);
+  }, [attachments.length]);
+
+  // Handle paste for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (const item of items) {
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+
+      if (files.length > 0) {
+        e.preventDefault();
+        await handleFiles(files);
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handleFiles]);
+
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  };
+
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
       e?.preventDefault();
+      if (isStreaming) return;
 
-      const trimmedInput = input.trim();
-      if (!trimmedInput || isStreaming) return;
+      const currentInput = input;
+      const currentAttachments = [...attachments];
 
-      const userMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "user",
-        content: trimmedInput,
-      };
-
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "",
-      };
-
-      const newMessages = [...messages, userMessage];
-      setMessages([...newMessages, assistantMessage]);
+      // Clear immediately for snappy UX
       setInput("");
-      setIsStreaming(true);
+      setAttachments([]);
 
-      try {
-        // Send full conversation history (excluding the empty assistant message)
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: newMessages.map(({ role, content }) => ({ role, content })),
-          }),
-        });
+      const success = await sendMessage(currentInput, currentAttachments);
 
-        if (!response.ok) {
-          throw new Error("Failed to send message");
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response body");
-
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.content) {
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    const lastMsg = updated[updated.length - 1];
-                    if (lastMsg && lastMsg.role === "assistant") {
-                      updated[updated.length - 1] = {
-                        ...lastMsg,
-                        content: lastMsg.content + parsed.content,
-                      };
-                    }
-                    return updated;
-                  });
-                }
-              } catch {
-                // Skip malformed JSON
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Chat error:", error);
-        setMessages((prev) => {
-          const updated = [...prev];
-          const lastMsg = updated[updated.length - 1];
-          if (lastMsg && lastMsg.role === "assistant") {
-            updated[updated.length - 1] = {
-              ...lastMsg,
-              content: "Sorry, something went wrong. Please try again.",
-            };
-          }
-          return updated;
-        });
-      } finally {
-        setIsStreaming(false);
+      // Restore on failure
+      if (!success) {
+        setInput(currentInput);
+        setAttachments(currentAttachments);
       }
     },
-    [input, isStreaming, messages]
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSubmit();
-      }
-    },
-    [handleSubmit]
+    [input, isStreaming, attachments, sendMessage]
   );
 
   const hasMessages = messages.length > 0;
@@ -143,96 +130,85 @@ export function ChatAssistant() {
   // Initial centered layout (like Claude)
   if (!hasMessages) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-4">
-        <div className="w-full max-w-2xl">
-          <h1 className="mb-8 text-center font-serif text-4xl text-heading">
-            How can I help you today?
-          </h1>
-          <form onSubmit={handleSubmit}>
-            <div className="relative flex items-end rounded-2xl border border-stone-200 bg-white shadow-sm focus-within:border-stone-300 focus-within:ring-2 focus-within:ring-stone-200">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Message..."
-                rows={1}
-                disabled={isStreaming}
-                className="max-h-[200px] min-h-[56px] flex-1 resize-none bg-transparent px-4 py-4 text-text placeholder:text-stone-400 focus:outline-none disabled:opacity-60"
+      <>
+        {previewAttachment && (
+          <AttachmentPreviewModal
+            attachment={previewAttachment}
+            onClose={() => setPreviewAttachment(null)}
+          />
+        )}
+        <div className="flex h-full flex-col items-center justify-center px-4">
+          <div className="w-full max-w-2xl">
+            <h1 className="mb-8 text-center font-serif text-4xl text-heading">
+              How can I help you today?
+            </h1>
+            <form onSubmit={handleSubmit}>
+              <ChatInput
+                input={input}
+                onInputChange={setInput}
+                attachments={attachments}
+                onRemoveAttachment={removeAttachment}
+                onAttachmentClick={setPreviewAttachment}
+                onFilesSelected={handleFiles}
+                onSubmit={() => handleSubmit()}
+                isStreaming={isStreaming}
+                uploadError={uploadError}
               />
-              <button
-                type="submit"
-                disabled={!input.trim() || isStreaming}
-                className="m-2 flex h-10 w-10 items-center justify-center rounded-xl bg-heading text-white transition-colors hover:bg-opacity-90 disabled:bg-stone-300 disabled:text-stone-400"
-              >
-                <ArrowUp className="h-5 w-5" />
-              </button>
-            </div>
-          </form>
+            </form>
+            <p className="mt-3 text-center text-sm text-stone-400">
+              AI can make mistakes. Please verify important information.
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   // Conversation layout (messages + input at bottom)
   return (
-    <div className="flex h-full flex-col">
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="mx-auto max-w-3xl space-y-6">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                  message.role === "user"
-                    ? "bg-heading text-white"
-                    : "bg-white text-text shadow-sm"
-                }`}
-              >
-                {message.role === "assistant" ? (
-                  <Streamdown
-                    plugins={{ code }}
-                    isAnimating={isStreaming && messages[messages.length - 1]?.id === message.id}
-                  >
-                    {message.content || " "}
-                  </Streamdown>
-                ) : (
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                )}
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
+    <>
+      {previewAttachment && (
+        <AttachmentPreviewModal
+          attachment={previewAttachment}
+          onClose={() => setPreviewAttachment(null)}
+        />
+      )}
+      <div className="relative h-full">
+        {/* Messages area - scrollable with bottom padding for input */}
+        <div className="h-full overflow-y-auto px-4 py-6 pb-24">
+          <div className="mx-auto max-w-4xl space-y-6 px-4">
+            {messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                id={message.id}
+                role={message.role}
+                content={message.content}
+                attachments={message.attachments}
+                isStreaming={isStreaming && messages[messages.length - 1]?.id === message.id}
+                onAttachmentClick={setPreviewAttachment}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input area - floating at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 bg-bg px-4 pb-4">
+          <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
+            <ChatInput
+              input={input}
+              onInputChange={setInput}
+              attachments={attachments}
+              onRemoveAttachment={removeAttachment}
+              onAttachmentClick={setPreviewAttachment}
+              onFilesSelected={handleFiles}
+              onSubmit={() => handleSubmit()}
+              isStreaming={isStreaming}
+              uploadError={uploadError}
+            />
+          </form>
         </div>
       </div>
-
-      {/* Input area at bottom */}
-      <div className="border-t border-stone-200 bg-white px-4 py-4">
-        <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
-          <div className="relative flex items-end rounded-2xl border border-stone-200 bg-stone-50 shadow-sm focus-within:border-stone-300 focus-within:ring-2 focus-within:ring-stone-200">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Message..."
-              rows={1}
-              disabled={isStreaming}
-              className="max-h-[200px] min-h-[52px] flex-1 resize-none bg-transparent px-4 py-3.5 text-text placeholder:text-stone-400 focus:outline-none disabled:opacity-60"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isStreaming}
-              className="m-2 flex h-9 w-9 items-center justify-center rounded-xl bg-heading text-white transition-colors hover:bg-opacity-90 disabled:bg-stone-300 disabled:text-stone-400"
-            >
-              <ArrowUp className="h-5 w-5" />
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    </>
   );
 }

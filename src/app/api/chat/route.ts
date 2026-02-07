@@ -1,7 +1,34 @@
 import { NextRequest } from "next/server";
 import { openai, DEFAULT_MODEL, DEFAULT_TEMPERATURE } from "@/lib/openai";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/prompts";
-import type { ChatRequest } from "@/lib/types/chat";
+import type { ChatRequest, ChatMessage, ContentPart } from "@/lib/types/chat";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+
+function transformMessage(message: ChatMessage): ChatCompletionMessageParam {
+  if (typeof message.content === "string") {
+    if (message.role === "assistant") {
+      return { role: "assistant", content: message.content };
+    }
+    return { role: "user", content: message.content };
+  }
+
+  // Transform content array to OpenAI format (only user messages support multimodal)
+  const content = message.content.map((part: ContentPart) => {
+    if (part.type === "text") {
+      return { type: "text" as const, text: part.text };
+    }
+    return {
+      type: "image_url" as const,
+      image_url: {
+        url: part.image_url.url,
+        detail: part.image_url.detail || ("auto" as const),
+      },
+    };
+  });
+
+  // Multimodal content is only supported for user messages
+  return { role: "user", content };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +41,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Transform messages to OpenAI format
+    const transformedMessages = body.messages.map(transformMessage);
+
     const stream = await openai.chat.completions.create({
       model: DEFAULT_MODEL,
       temperature: DEFAULT_TEMPERATURE,
@@ -23,7 +53,7 @@ export async function POST(req: NextRequest) {
           role: "system",
           content: CHAT_SYSTEM_PROMPT,
         },
-        ...body.messages,
+        ...transformedMessages,
       ],
     });
 
