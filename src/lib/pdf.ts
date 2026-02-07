@@ -12,7 +12,7 @@ async function getPdfjs() {
     // Use legacy build for better browser compatibility
     pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
     // Use local worker from public folder
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   }
 
   return pdfjsLib;
