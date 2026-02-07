@@ -139,8 +139,20 @@ export function ChatInput({
         </div>
       )}
 
-      {/* Input row */}
-      <div className="flex items-end">
+      {/* Textarea */}
+      <textarea
+        ref={textareaRef}
+        value={input}
+        onChange={(e) => onInputChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={isDragOver ? "Drop files here..." : "Message..."}
+        rows={1}
+        disabled={isStreaming}
+        className="max-h-[200px] min-h-[48px] w-full resize-none bg-transparent px-4 py-3 text-text placeholder:text-stone-400 focus:outline-none disabled:opacity-60"
+      />
+
+      {/* Bottom row with attach and send buttons */}
+      <div className="flex items-center justify-between px-2 pb-2">
         <input
           ref={fileInputRef}
           type="file"
@@ -153,25 +165,15 @@ export function ChatInput({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isStreaming}
-          className="m-2 flex h-9 w-9 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600 disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600 disabled:opacity-50"
           title="Attach files"
         >
           <Paperclip className="h-5 w-5" />
         </button>
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={isDragOver ? "Drop files here..." : "Message..."}
-          rows={1}
-          disabled={isStreaming}
-          className="max-h-[200px] min-h-[52px] flex-1 resize-none bg-transparent py-3.5 pr-2 text-text placeholder:text-stone-400 focus:outline-none disabled:opacity-60"
-        />
         <button
           type="submit"
           disabled={(!input.trim() && attachments.length === 0) || isStreaming}
-          className="m-2 flex h-9 w-9 items-center justify-center rounded-xl bg-heading text-white transition-colors hover:bg-opacity-90 disabled:bg-stone-300 disabled:text-stone-400"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-heading text-white transition-colors hover:bg-opacity-90 disabled:bg-stone-300 disabled:text-stone-400"
         >
           <ArrowUp className="h-5 w-5" />
         </button>

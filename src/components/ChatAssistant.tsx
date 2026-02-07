@@ -162,10 +162,10 @@ export function ChatAssistant() {
           onClose={() => setPreviewAttachment(null)}
         />
       )}
-      <div className="flex h-full flex-col">
-        {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="mx-auto max-w-3xl space-y-6">
+      <div className="relative h-full">
+        {/* Messages area - scrollable with bottom padding for input */}
+        <div className="h-full overflow-y-auto px-4 py-6 pb-24">
+          <div className="mx-auto max-w-4xl space-y-6 px-4">
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -181,9 +181,9 @@ export function ChatAssistant() {
           </div>
         </div>
 
-        {/* Input area at bottom */}
-        <div className="border-t border-stone-200 bg-white px-4 py-4">
-          <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
+        {/* Input area - floating at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 bg-bg px-4 pb-4">
+          <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
             <ChatInput
               input={input}
               onInputChange={setInput}

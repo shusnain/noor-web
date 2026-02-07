@@ -26,9 +26,11 @@ export function ChatMessage({
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-          isUser ? "bg-heading text-white" : "bg-white text-text shadow-sm"
-        }`}
+        className={
+          isUser
+            ? "max-w-[85%] rounded-2xl bg-heading px-4 py-3 text-white"
+            : "w-full text-text"
+        }
       >
         {/* Attachment display for user messages */}
         {isUser && attachments && attachments.length > 0 && (
