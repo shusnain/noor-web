@@ -4,11 +4,6 @@ import { CHAT_SYSTEM_PROMPT } from "@/lib/prompts";
 import type { ChatRequest, ChatMessage, ContentPart } from "@/lib/types/chat";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
-function hasImageContent(message: ChatMessage): boolean {
-  if (typeof message.content === "string") return false;
-  return message.content.some((part) => part.type === "image_url");
-}
-
 function transformMessage(message: ChatMessage): ChatCompletionMessageParam {
   if (typeof message.content === "string") {
     if (message.role === "assistant") {
@@ -45,9 +40,6 @@ export async function POST(req: NextRequest) {
         headers: { "Content-Type": "application/json" },
       });
     }
-
-    // Check if any message contains images
-    const hasImages = body.messages.some(hasImageContent);
 
     // Transform messages to OpenAI format
     const transformedMessages = body.messages.map(transformMessage);
