@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ArrowUp, Paperclip, X } from "lucide-react";
+import { ArrowUp, Loader2, Paperclip, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Attachment } from "@/lib/types/chat";
 import { AttachmentThumbnail } from "./AttachmentThumbnail";
@@ -175,7 +175,11 @@ export function ChatInput({
           disabled={(!input.trim() && attachments.length === 0) || isStreaming}
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-heading text-white transition-colors hover:bg-opacity-90 disabled:bg-stone-300 disabled:text-stone-400"
         >
-          <ArrowUp className="h-5 w-5" />
+          {isStreaming ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <ArrowUp className="h-5 w-5" />
+          )}
         </button>
       </div>
 

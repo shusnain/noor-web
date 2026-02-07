@@ -7,7 +7,7 @@ import { convertPDFToImages } from "@/lib/pdf";
 interface UseChatReturn {
   messages: UIMessage[];
   isStreaming: boolean;
-  sendMessage: (text: string, attachments: Attachment[]) => Promise<void>;
+  sendMessage: (text: string, attachments: Attachment[]) => Promise<boolean>;
 }
 
 export function useChat(): UseChatReturn {
@@ -15,9 +15,9 @@ export function useChat(): UseChatReturn {
   const [isStreaming, setIsStreaming] = useState(false);
 
   const sendMessage = useCallback(
-    async (text: string, attachments: Attachment[]) => {
+    async (text: string, attachments: Attachment[]): Promise<boolean> => {
       const trimmedInput = text.trim();
-      if ((!trimmedInput && attachments.length === 0) || isStreaming) return;
+      if ((!trimmedInput && attachments.length === 0) || isStreaming) return false;
 
       // Build content parts for the API
       const contentParts: ContentPart[] = [];
@@ -152,6 +152,7 @@ export function useChat(): UseChatReturn {
             }
           }
         }
+        return true;
       } catch (error) {
         console.error("Chat error:", error);
         setMessages((prev) => {
@@ -165,6 +166,7 @@ export function useChat(): UseChatReturn {
           }
           return updated;
         });
+        return false;
       } finally {
         setIsStreaming(false);
       }

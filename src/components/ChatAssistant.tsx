@@ -107,9 +107,20 @@ export function ChatAssistant() {
       e?.preventDefault();
       if (isStreaming) return;
 
-      await sendMessage(input, attachments);
+      const currentInput = input;
+      const currentAttachments = [...attachments];
+
+      // Clear immediately for snappy UX
       setInput("");
       setAttachments([]);
+
+      const success = await sendMessage(currentInput, currentAttachments);
+
+      // Restore on failure
+      if (!success) {
+        setInput(currentInput);
+        setAttachments(currentAttachments);
+      }
     },
     [input, isStreaming, attachments, sendMessage]
   );
